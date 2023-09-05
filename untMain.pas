@@ -64,6 +64,19 @@ type
     btnListen: TButton;
     btnSend: TButton;
     udpClient: TIdUDPClient;
+    Label1: TLabel;
+    Label2: TLabel;
+    lblDateTime: TLabel;
+    lblMsgLen: TLabel;
+    Label4: TLabel;
+    lblMsgLen2: TLabel;
+    Label5: TLabel;
+    Label3: TLabel;
+    lblSensorCount: TLabel;
+    Label6: TLabel;
+    lblDecimal: TLabel;
+    chkS1: TCheckBox;
+    chkS2: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure radFuncClick(Sender: TObject);
@@ -96,14 +109,20 @@ uses untAutoParams;
 
 procedure TfrmMain.btnListenClick(Sender: TObject);
 begin
-  var iPort := strtoint(edtPort.Text);
-  //udpServer.DefaultPort := iPort;
-
-  //udpServer.Active := true;
-  m_KeLiUDP.ClientPort := iPort;
-  m_KeLiUDP.Active := true;
-  btnListen.Enabled := false;
-  m_log.LogMsg('¿ªÊ¼¼àÌý');
+  if m_KeLiUDP.Active then
+  begin
+    m_KeLiUDP.Active := false;
+    btnListen.Caption := '¿ªÊ¼¼àÌý';
+    m_log.LogMsg('Í£Ö¹¼àÌý');
+  end
+  else
+  begin
+    var iPort := strtoint(edtPort.Text);
+    m_KeLiUDP.ClientPort := iPort;
+    m_KeLiUDP.Active := true;
+    btnListen.Caption := 'Í£Ö¹¼àÌý';
+    m_log.LogMsg('¿ªÊ¼¼àÌý');
+  end;
 end;
 
 procedure TfrmMain.btnSendClick(Sender: TObject);
@@ -138,6 +157,11 @@ end;
 procedure TfrmMain.KeLiGetData;
 begin
   m_Log.LogMsg(m_KeLiUDP.RawData);
+  lblMsgLen.Caption := m_KeLiUDP.MsgLength.ToString;
+  lblDateTime.Caption := m_KeLiUDP.DateTime;
+  lblMsgLen2.Caption := m_KeLiUDP.MsgLength2.ToString;
+  lblSensorCount.Caption := m_KeLiUDP.SensorCount.ToString;
+  lblDecimal.Caption := m_KeLiUDP.Decimal.ToString;
 end;
 
 procedure TfrmMain.KeLiUdpError;

@@ -90,7 +90,8 @@ begin
   if FListBox <> nil then
   begin
     var sTime := datetimetostr(now) + ' ----> ' + sMsg;
-    FListBox.Items.Add(sTime);
+    if assigned(FListBox) then
+      FListBox.Items.Add(sTime);
 
     if LogFileType <> LogFileSaveType.NotSave then
     begin

@@ -2,8 +2,8 @@ object frmMain: TfrmMain
   Left = 0
   Top = 0
   Caption = #26607#21147#20202#34920#32593#32476#36890#35759#27979#35797
-  ClientHeight = 441
-  ClientWidth = 588
+  ClientHeight = 444
+  ClientWidth = 715
   Color = clBtnFace
   Font.Charset = GB2312_CHARSET
   Font.Color = clWindowText
@@ -13,6 +13,83 @@ object frmMain: TfrmMain
   OnClose = FormClose
   OnCreate = FormCreate
   TextHeight = 16
+  object Label1: TLabel
+    Left = 464
+    Top = 128
+    Width = 48
+    Height = 16
+    Caption = #35299#26512#65306
+  end
+  object Label2: TLabel
+    Left = 464
+    Top = 204
+    Width = 80
+    Height = 16
+    Caption = #26085#26399#26102#38388#65306
+  end
+  object lblDateTime: TLabel
+    Left = 553
+    Top = 204
+    Width = 24
+    Height = 16
+    Caption = '---'
+  end
+  object lblMsgLen: TLabel
+    Left = 553
+    Top = 160
+    Width = 8
+    Height = 16
+    Caption = '0'
+  end
+  object Label4: TLabel
+    Left = 464
+    Top = 160
+    Width = 80
+    Height = 16
+    Caption = #23454#38469#38271#24230#65306
+  end
+  object lblMsgLen2: TLabel
+    Left = 553
+    Top = 182
+    Width = 8
+    Height = 16
+    Caption = '0'
+  end
+  object Label5: TLabel
+    Left = 464
+    Top = 182
+    Width = 80
+    Height = 16
+    Caption = #23450#20041#38271#24230#65306
+  end
+  object Label3: TLabel
+    Left = 464
+    Top = 226
+    Width = 80
+    Height = 16
+    Caption = #20256' '#24863' '#22120#65306
+  end
+  object lblSensorCount: TLabel
+    Left = 553
+    Top = 226
+    Width = 8
+    Height = 16
+    Caption = '0'
+  end
+  object Label6: TLabel
+    Left = 464
+    Top = 248
+    Width = 80
+    Height = 16
+    Caption = #23567' '#25968' '#28857#65306
+  end
+  object lblDecimal: TLabel
+    Left = 553
+    Top = 248
+    Width = 8
+    Height = 16
+    Caption = '0'
+  end
   object edtIP: TLabeledEdit
     Left = 80
     Top = 8
@@ -70,8 +147,8 @@ object frmMain: TfrmMain
     Text = #25105#26159#21457#36865#20869#23481
   end
   object btnListen: TButton
-    Left = 464
-    Top = 158
+    Left = 592
+    Top = 68
     Width = 113
     Height = 41
     Caption = #24320#22987#30417#21548
@@ -80,17 +157,33 @@ object frmMain: TfrmMain
     OnClick = btnListenClick
   end
   object btnSend: TButton
-    Left = 464
-    Top = 111
+    Left = 592
+    Top = 21
     Width = 113
     Height = 41
     Caption = #21457#36865
     TabOrder = 6
     OnClick = btnSendClick
   end
+  object chkS1: TCheckBox
+    Left = 464
+    Top = 376
+    Width = 80
+    Height = 17
+    Caption = #25968#25454'OK'
+    TabOrder = 7
+  end
+  object chkS2: TCheckBox
+    Left = 550
+    Top = 376
+    Width = 80
+    Height = 17
+    Caption = #31204#36229#36733
+    TabOrder = 8
+  end
   object udpClient: TIdUDPClient
     Port = 0
-    Left = 528
-    Top = 240
+    Left = 352
+    Top = 96
   end
 end

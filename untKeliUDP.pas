@@ -29,10 +29,14 @@ type
     FErrorMsg: string;
     FUdpError: TKeLiEvent;
     FTimerError: boolean;
+    FDateTime: string;
+    FMsgLength: integer;
+    FMsgLength2: integer;  //数据的实际长度
+    FStrTmp: string;
+    FSensorCount: integer;
     procedure SetIsSender(const Value: boolean);
     procedure SetClientPort(const Value: integer);
     procedure SetGrossWeight(const Value: integer);
-    procedure SetDecimal(const Value: integer);
     procedure SetFActive(const Value: boolean);
 
     procedure UDPServerRead(AThread: TIdUDPListenerThread; const AData: TIdBytes; ABinding: TIdSocketHandle);
@@ -47,7 +51,7 @@ type
     property IsSender: boolean read FIsSender write SetIsSender;
     property ClientPort: integer read FClientPort write SetClientPort;
     property GrossWeight: integer read FGrossWeight write SetGrossWeight;
-    property Decimal: integer read FDecimal write SetDecimal;
+    property Decimal: integer read FDecimal;
     property Status_Steady: boolean read FStatus_Steady;
     property Status_Overload: boolean read FStatus_Overload;
     property Status_CommOK: boolean read FStatus_CommOK;
@@ -57,6 +61,11 @@ type
     property OnUdpError: TKeLiEvent read FUdpError write FUdpError;
     property RawData: string read FRawData;
     property ErrorMsg: string read FErrorMsg;
+    property DateTime: string read FDateTime;
+    property MsgLength: integer read FMsgLength;  //数据帧的实际长度
+    property MsgLength2: integer read FMsgLength2; //数据帧的定义长度
+    property SensorCount: integer read FSensorCount;
+    property StrTmp: string read FStrTmp;
 
     procedure TriggerGetDataEvent();  //触发读到数据的事件
     procedure TriggerUdpErrorEvent(); //触发udp错误的事件
@@ -121,11 +130,6 @@ begin
   udpServer.DefaultPort := Value;
 end;
 
-procedure TKeliUDP.SetDecimal(const Value: integer);
-begin
-  FDecimal := Value;
-end;
-
 procedure TKeliUDP.SetFActive(const Value: boolean);
 begin
   FActive := Value;
@@ -173,9 +177,21 @@ end;
 
 procedure TKeliUDP.UDPServerRead(AThread: TIdUDPListenerThread;
   const AData: TIdBytes; ABinding: TIdSocketHandle);
+var
+  sTmp: string;
 begin
   var data := BytesToString(AData, IndyTextEncoding_UTF8);
   FRawData := data;
+  FMsgLength := length(FRawData);
+  FDateTime := copy(FRawData, 8, 17);
+  FMsgLength2 := AData[24] shl 8 + AData[25];
+  FSensorCount := AData[26];
+  FDecimal := AData[27];
+  FStatus_Steady := ((AData[40] and $4) <> 0);
+  FStatus_Overload := ((AData[40] and $2) <> 0);
+  FStatus_CommOK := ((AData[40] and $40) <> 0);
+  FStatus_DataOK := ((AData[40] and $1) <> 0);
+
   TriggerGetDataEvent();
   timer.Enabled := false;
   timer.Enabled := true;
