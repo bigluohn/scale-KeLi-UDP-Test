@@ -15,7 +15,6 @@ type
   private
     FGetData: TKeLiEvent;
     FIsSender: boolean; //是发送还是接收？true是发送
-    FClientPort: integer;
     FGrossWeight: integer;
     FDecimal: integer;
     FStatus_Steady: boolean;
@@ -32,10 +31,12 @@ type
     FDateTime: string;
     FMsgLength: integer;
     FMsgLength2: integer;  //数据的实际长度
-    FStrTmp: string;
     FSensorCount: integer;
+    FCheckSumOK: boolean;
+    FPeerIP: string;
+    FPeerPort: integer;
+    FPort: integer;   //固定4097, 可以用
     procedure SetIsSender(const Value: boolean);
-    procedure SetClientPort(const Value: integer);
     procedure SetGrossWeight(const Value: integer);
     procedure SetFActive(const Value: boolean);
 
@@ -43,13 +44,12 @@ type
     procedure UDPServerError(AThread: TIdUDPListenerThread; ABinding: TIdSocketHandle; const AMessage: string;
                               const AExceptionClass: TClass);
     procedure timerOnTime(Sender: TObject);
-    function CheckData(): integer;
+    procedure SetPort(const Value: integer);
   public
     constructor Create();
     destructor Destroy; override;
 
     property IsSender: boolean read FIsSender write SetIsSender;
-    property ClientPort: integer read FClientPort write SetClientPort;
     property GrossWeight: integer read FGrossWeight write SetGrossWeight;
     property Decimal: integer read FDecimal;
     property Status_Steady: boolean read FStatus_Steady;
@@ -65,8 +65,13 @@ type
     property MsgLength: integer read FMsgLength;  //数据帧的实际长度
     property MsgLength2: integer read FMsgLength2; //数据帧的定义长度
     property SensorCount: integer read FSensorCount;
-    property StrTmp: string read FStrTmp;
+    property CheckSumOK: boolean read FCheckSumOK;
+    property PeerIP: string read FPeerIP;
+    property PeerPort: integer read FPeerPort;
+    property Port: integer read FPort write SetPort;
 
+    procedure SetZero(); //置零
+    procedure SetSendRate(bHighRate: boolean); //设置发送速率
     procedure TriggerGetDataEvent();  //触发读到数据的事件
     procedure TriggerUdpErrorEvent(); //触发udp错误的事件
   end;
@@ -74,32 +79,6 @@ type
 implementation
 
 { TKeliUDP }
-
-//检查读回来的数据(格式)是否正确
-function TKeliUDP.CheckData: integer;
-begin
-  result := 0;
-
-  //1. 数据头, 是不是 'STATE: '
-  var sBegin := RawData.Substring(1, 7);
-  if sBegin = 'STATE: ' then
-  begin
-    var iLen1 := length(RawData);       //实际的数据帧长度
-    var iLen2 := strtoint('0x' + RawData.Substring(25, 2)); //数据帧里面描述的长度
-    if iLen1 = iLen2 then
-    begin
-      //校验码
-      //var iSum :=
-
-
-      exit(0); //返回码0, 正常
-    end
-    else
-      exit(2); //返回码2, 数据帧长度不一致
-  end
-  else
-    exit(1);  //返回码1, 数据头不是 'STATE: '
-end;
 
 constructor TKeliUDP.Create;
 begin
@@ -123,13 +102,6 @@ begin
   inherited;
 end;
 
-procedure TKeliUDP.SetClientPort(const Value: integer);
-begin
-  FClientPort := Value;
-  udpServer.Active := false;
-  udpServer.DefaultPort := Value;
-end;
-
 procedure TKeliUDP.SetFActive(const Value: boolean);
 begin
   FActive := Value;
@@ -145,6 +117,35 @@ end;
 procedure TKeliUDP.SetIsSender(const Value: boolean);
 begin
   FIsSender := Value;
+end;
+
+procedure TKeliUDP.SetPort(const Value: integer);
+begin
+  FPort := Value;
+  udpServer.Active := false;
+  udpServer.DefaultPort := Value;
+end;
+
+procedure TKeliUDP.SetSendRate(bHighRate: boolean);
+var
+  sComm: string;
+begin
+  if udpServer.Active then
+  begin
+    //指令: SPEEDCOMMAND:1  , 0是每秒3次, 1是每秒10次, 1要新版本才支持
+    if bHighRate then
+      sComm := 'SPEEDCOMMAND:1'
+    else
+      sComm := 'SPEEDCOMMAND:0';
+    udpServer.Send(FPeerIP, FPeerPort, sComm);
+  end;
+end;
+
+procedure TKeliUDP.SetZero;
+begin
+  //即发送指令: KEYCOMMAND:ZERO
+  if udpServer.Active then
+    udpServer.Send(FPeerIP, FPeerPort, 'KEYCOMMAND:ZERO');
 end;
 
 procedure TKeliUDP.timerOnTime(Sender: TObject);
@@ -179,6 +180,7 @@ procedure TKeliUDP.UDPServerRead(AThread: TIdUDPListenerThread;
   const AData: TIdBytes; ABinding: TIdSocketHandle);
 var
   sTmp: string;
+  iSum, iChk: integer;
 begin
   var data := BytesToString(AData, IndyTextEncoding_UTF8);
   FRawData := data;
@@ -191,6 +193,15 @@ begin
   FStatus_Overload := ((AData[40] and $2) <> 0);
   FStatus_CommOK := ((AData[40] and $40) <> 0);
   FStatus_DataOK := ((AData[40] and $1) <> 0);
+  FGrossWeight := AData[48] + (AData[49] shl 8) + (AData[50] shl 16) +
+        (AData[51] shl 24);
+  FPeerPort := ABinding.PeerPort;
+  FPeerIP := ABinding.PeerIP;
+  iSum := 0;
+  for var i := 0 to FMsgLength - 3 do
+    iSum := iSum + AData[i];
+  iChk := (AData[FMsgLength - 2] shl 8) + (AData[FMsgLength - 1] shl 0);
+  FCheckSumOK := (iSum = iChk);
 
   TriggerGetDataEvent();
   timer.Enabled := false;

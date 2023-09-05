@@ -34,11 +34,20 @@ int16u iSum = 第0-139字节的算术加，则
 校验码2(地址141) = iSum & 0xFF;
 
 例：仪表显示0.0t
-接收数据(16进制)
-53 54 41 54 45 3A 20 31 39 2D 30 39 2D 32 33 20 32 32 3A 30 37 3A 32 33 00 8E 01 01 00 00 00 00 00 00 00 00 00 00 00 00 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 99 D0 1E 47 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 C5
+接收数据(16进制),
+1(从0开始的) 5             10             15             20             25             30
+53 54 41 54 45 3A 20 31 39 2D 30 39 2D 32 33 20 32 32 3A 30 37 3A 32 33 00 8E 01 01 00 00
+00 00 00 00 00 00 00 00 00 00 34 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+02 99 D0 1E 47 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 C5
 仪表显示382.2t
 接收数据(16进制)
-53 54 41 54 45 3A 20 31 39 2D 30 39 2D 32 33 20 32 32 3A 30 38 3A 31 36 00 8E 01 01 00 00 00 00 00 00 00 00 00 00 00 00 24 00 00 00 3F DC 6E 45 EE 0E 00 00 00 00 00 00 EE 0E 00 00 02 00 B3 E4 47 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0B 8E
+53 54 41 54 45 3A 20 31 39 2D 30 39 2D 32 33 20 32 32 3A 30 38 3A 31 36 00 8E 01 01 00 00
+00 00 00 00 00 00 00 00 00 00 24 00 00 00 3F DC 6E 45 EE 0E 00 00 00 00 00 00 EE 0E 00 00
+02 00 B3 E4 47 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0B 8E
 
 
 1、置零指令: "KEYCOMMAND:ZERO"
@@ -77,11 +86,25 @@ type
     lblDecimal: TLabel;
     chkS1: TCheckBox;
     chkS2: TCheckBox;
+    chkS3: TCheckBox;
+    chkS4: TCheckBox;
+    Label7: TLabel;
+    lblGross: TLabel;
+    chkChkOK: TCheckBox;
+    GroupBox1: TGroupBox;
+    btnZero: TButton;
+    chkHighRate: TCheckBox;
+    Label8: TLabel;
+    lblPeerIPPort: TLabel;
+    btnClear: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure radFuncClick(Sender: TObject);
     procedure btnSendClick(Sender: TObject);
     procedure btnListenClick(Sender: TObject);
+    procedure btnZeroClick(Sender: TObject);
+    procedure chkHighRateClick(Sender: TObject);
+    procedure btnClearClick(Sender: TObject);
   private
     { Private declarations }
     m_ini: TIniFile;
@@ -107,6 +130,11 @@ uses untAutoParams;
   m_ini: TIniFile;
   m_log: TLog;}
 
+procedure TfrmMain.btnClearClick(Sender: TObject);
+begin
+  lst.Clear;
+end;
+
 procedure TfrmMain.btnListenClick(Sender: TObject);
 begin
   if m_KeLiUDP.Active then
@@ -118,7 +146,7 @@ begin
   else
   begin
     var iPort := strtoint(edtPort.Text);
-    m_KeLiUDP.ClientPort := iPort;
+    m_KeLiUDP.Port := iPort;
     m_KeLiUDP.Active := true;
     btnListen.Caption := '停止监听';
     m_log.LogMsg('开始监听');
@@ -131,6 +159,16 @@ begin
   var iPort := strtoint(edtPort.Text);
   udpClient.Port := iPort;
   udpClient.Send(edtSendText.Text, IndyTextEncoding_UTF8);
+end;
+
+procedure TfrmMain.btnZeroClick(Sender: TObject);
+begin
+  m_KeLiUDP.SetZero;
+end;
+
+procedure TfrmMain.chkHighRateClick(Sender: TObject);
+begin
+  m_KeLiUDP.SetSendRate(chkHighRate.Checked);
 end;
 
 procedure TfrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -162,11 +200,19 @@ begin
   lblMsgLen2.Caption := m_KeLiUDP.MsgLength2.ToString;
   lblSensorCount.Caption := m_KeLiUDP.SensorCount.ToString;
   lblDecimal.Caption := m_KeLiUDP.Decimal.ToString;
+  lblGross.Caption := m_KeLiUDP.GrossWeight.ToString;
+  lblPeerIPPort.Caption := m_KeLiUDP.PeerIP + ':' + m_KeLiUDP.PeerPort.ToString;
+
+  chkS1.Checked := m_KeLiUDP.Status_DataOK;
+  chkS2.Checked := m_KeLiUDP.Status_Overload;
+  chkS3.Checked := m_KeLiUDP.Status_Steady;
+  chkS4.Checked := m_KeLiUDP.Status_CommOK;
+  chkChkOK.Checked := m_KeLiUDP.CheckSumOK;
 end;
 
 procedure TfrmMain.KeLiUdpError;
 begin
-  m_Log.LogMsg('Udp error timer');
+  m_Log.LogMsg('!!!无法通讯!!!');
 end;
 
 procedure TfrmMain.radFuncClick(Sender: TObject);
