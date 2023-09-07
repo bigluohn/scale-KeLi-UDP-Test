@@ -195,7 +195,7 @@ object frmMain: TfrmMain
   end
   object chkS1: TCheckBox
     Left = 464
-    Top = 376
+    Top = 408
     Width = 91
     Height = 17
     Caption = #25968#25454#24322#24120
@@ -203,7 +203,7 @@ object frmMain: TfrmMain
   end
   object chkS2: TCheckBox
     Left = 574
-    Top = 376
+    Top = 408
     Width = 80
     Height = 17
     Caption = #31204#36229#36733
@@ -211,7 +211,7 @@ object frmMain: TfrmMain
   end
   object chkS3: TCheckBox
     Left = 464
-    Top = 399
+    Top = 431
     Width = 80
     Height = 17
     Caption = #31204#31283#23450
@@ -219,7 +219,7 @@ object frmMain: TfrmMain
   end
   object chkS4: TCheckBox
     Left = 574
-    Top = 399
+    Top = 431
     Width = 91
     Height = 17
     Caption = #36890#35759#24322#24120
@@ -227,7 +227,7 @@ object frmMain: TfrmMain
   end
   object chkChkOK: TCheckBox
     Left = 464
-    Top = 422
+    Top = 454
     Width = 91
     Height = 17
     Caption = #26657#39564#30721'OK'
@@ -267,6 +267,15 @@ object frmMain: TfrmMain
     Caption = #28165#38500#26174#31034
     TabOrder = 13
     OnClick = btnClearClick
+  end
+  object btnGetIPs: TButton
+    Left = 151
+    Top = 440
+    Width = 130
+    Height = 25
+    Caption = #33719#21462#26412#26426#30340'IP'
+    TabOrder = 14
+    OnClick = btnGetIPsClick
   end
   object udpClient: TIdUDPClient
     Port = 0

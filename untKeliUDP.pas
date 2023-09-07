@@ -179,29 +179,35 @@ end;
 procedure TKeliUDP.UDPServerRead(AThread: TIdUDPListenerThread;
   const AData: TIdBytes; ABinding: TIdSocketHandle);
 var
-  sTmp: string;
   iSum, iChk: integer;
 begin
   var data := BytesToString(AData, IndyTextEncoding_UTF8);
   FRawData := data;
-  FMsgLength := length(FRawData);
-  FDateTime := copy(FRawData, 8, 17);
-  FMsgLength2 := AData[24] shl 8 + AData[25];
-  FSensorCount := AData[26];
-  FDecimal := AData[27];
-  FStatus_Steady := ((AData[40] and $4) <> 0);
-  FStatus_Overload := ((AData[40] and $2) <> 0);
-  FStatus_CommOK := ((AData[40] and $40) <> 0);
-  FStatus_DataOK := ((AData[40] and $1) <> 0);
-  FGrossWeight := AData[48] + (AData[49] shl 8) + (AData[50] shl 16) +
-        (AData[51] shl 24);
-  FPeerPort := ABinding.PeerPort;
-  FPeerIP := ABinding.PeerIP;
-  iSum := 0;
-  for var i := 0 to FMsgLength - 3 do
-    iSum := iSum + AData[i];
-  iChk := (AData[FMsgLength - 2] shl 8) + (AData[FMsgLength - 1] shl 0);
-  FCheckSumOK := (iSum = iChk);
+
+  FMsgLength := length(AData);  //接收到的数据长度
+  FMsgLength2 := AData[24] shl 8 + AData[25];  //正常数据应该具有的长度
+
+  if FMsgLength = FMsgLength2 then
+  begin
+    FDateTime := copy(FRawData, 8, 17);
+    FSensorCount := AData[26];
+    FDecimal := AData[27];
+    FStatus_Steady := ((AData[40] and $4) <> 0);
+    FStatus_Overload := ((AData[40] and $2) <> 0);
+    FStatus_CommOK := ((AData[40] and $40) <> 0);
+    FStatus_DataOK := ((AData[40] and $1) <> 0);
+    FGrossWeight := AData[48] + (AData[49] shl 8) + (AData[50] shl 16) +
+          (AData[51] shl 24);
+    FPeerPort := ABinding.PeerPort;
+    FPeerIP := ABinding.PeerIP;
+    iSum := 0;
+    for var i := 0 to FMsgLength - 3 do
+      iSum := iSum + AData[i];
+    iChk := (AData[FMsgLength - 2] shl 8) + AData[FMsgLength - 1];
+    FCheckSumOK := (iSum = iChk);
+  end
+  else
+    FCheckSumOK := false;
 
   TriggerGetDataEvent();
   timer.Enabled := false;

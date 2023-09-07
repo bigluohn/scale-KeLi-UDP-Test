@@ -61,7 +61,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask, Vcl.ExtCtrls, IdGlobal, IdGlobalProtocols,
   IdBaseComponent, IdComponent, IdUDPBase, IdUDPServer, IniFiles, untLog, untKeliUDP,
-  IdSocketHandle, IdUDPClient;
+  IdSocketHandle, IdUDPClient, WinSock, IpHlpApi;
 
 type
   TfrmMain = class(TForm)
@@ -97,6 +97,7 @@ type
     Label8: TLabel;
     lblPeerIPPort: TLabel;
     btnClear: TButton;
+    btnGetIPs: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure radFuncClick(Sender: TObject);
@@ -105,6 +106,7 @@ type
     procedure btnZeroClick(Sender: TObject);
     procedure chkHighRateClick(Sender: TObject);
     procedure btnClearClick(Sender: TObject);
+    procedure btnGetIPsClick(Sender: TObject);
   private
     { Private declarations }
     m_ini: TIniFile;
@@ -166,6 +168,68 @@ begin
   m_KeLiUDP.SetZero;
 end;
 
+
+function GetLocalIP(Multi: Boolean = False): string;
+type
+  PPInAddr = ^PInAddr; //取本机IP，可取多个(分行列出)
+var
+  wsaData: TWSAData;
+  HostInfo: PHostEnt;
+  HostName: array[0..255] of AnsiChar;
+  Addr: PPInAddr;
+begin
+  Result := '';
+  if WSAStartup($0101, wsaData) <> 0 then
+    exit;
+  try
+    if gethostname(HostName, SizeOf(HostName)) <> 0 then Exit;
+
+    HostInfo := gethostbyname(HostName);
+    if HostInfo = nil then Exit;
+
+    Addr := Pointer(HostInfo^.h_addr_list);
+    if (Addr = nil) or (Addr^ = nil) then Exit;
+
+    Result := StrPas(inet_ntoa(Addr^^));
+    inc(Addr);
+    while (Addr^ <> nil) and Multi do begin
+      Result := Result + ', ' + StrPas(inet_ntoa(Addr^^));
+      inc(Addr);
+    end;
+  finally
+    WSACleanup;
+  end;
+end;
+
+//procedure GetAllIPAddresses;
+//var
+//  bufferSize: DWORD;
+//  table: PMIB_IPADDRTABLE;
+//  i: Integer;
+//begin
+//  bufferSize := 0;
+//  GetIpAddrTable(nil, @bufferSize, False);
+//
+//  GetMem(table, bufferSize);
+//  try
+//    if GetIpAddrTable(table, @bufferSize, False) = NO_ERROR then
+//    begin
+//      for i := 0 to table.dwNumEntries - 1 do
+//      begin
+//        // 获取IP地址
+//        ShowMessage(Format('IP Address: %s', [inet_ntoa(TInAddr(table.table[i].dwAddr))]));
+//      end;
+//    end;
+//  finally
+//    FreeMem(table);
+//  end;
+//end;
+
+procedure TfrmMain.btnGetIPsClick(Sender: TObject);
+begin
+  lst.Items.Add('本机的IP为: ' + GetLocalIP(true));
+end;
+
 procedure TfrmMain.chkHighRateClick(Sender: TObject);
 begin
   m_KeLiUDP.SetSendRate(chkHighRate.Checked);
@@ -194,20 +258,27 @@ end;
 
 procedure TfrmMain.KeLiGetData;
 begin
-  m_Log.LogMsg(m_KeLiUDP.RawData);
-  lblMsgLen.Caption := m_KeLiUDP.MsgLength.ToString;
-  lblDateTime.Caption := m_KeLiUDP.DateTime;
-  lblMsgLen2.Caption := m_KeLiUDP.MsgLength2.ToString;
-  lblSensorCount.Caption := m_KeLiUDP.SensorCount.ToString;
-  lblDecimal.Caption := m_KeLiUDP.Decimal.ToString;
-  lblGross.Caption := m_KeLiUDP.GrossWeight.ToString;
-  lblPeerIPPort.Caption := m_KeLiUDP.PeerIP + ':' + m_KeLiUDP.PeerPort.ToString;
+  m_Log.LogMsg(copy(m_KeLiUDP.RawData, 1, 7));
 
-  chkS1.Checked := m_KeLiUDP.Status_DataOK;
-  chkS2.Checked := m_KeLiUDP.Status_Overload;
-  chkS3.Checked := m_KeLiUDP.Status_Steady;
-  chkS4.Checked := m_KeLiUDP.Status_CommOK;
-  chkChkOK.Checked := m_KeLiUDP.CheckSumOK;
+  if not m_KeLiUDP.CheckSumOK then
+    m_Log.LogMsg('数据异常, 数据头: ' + copy(m_KeLiUDP.RawData, 1, 7))
+  else
+  begin
+    lblMsgLen.Caption := m_KeLiUDP.MsgLength.ToString;
+    lblDateTime.Caption := m_KeLiUDP.DateTime;
+    lblMsgLen2.Caption := m_KeLiUDP.MsgLength2.ToString;
+    lblSensorCount.Caption := m_KeLiUDP.SensorCount.ToString;
+    lblDecimal.Caption := m_KeLiUDP.Decimal.ToString;
+    lblGross.Caption := m_KeLiUDP.GrossWeight.ToString;
+    lblPeerIPPort.Caption := m_KeLiUDP.PeerIP + ':' + m_KeLiUDP.PeerPort.ToString;
+
+    chkS1.Checked := m_KeLiUDP.Status_DataOK;
+    chkS2.Checked := m_KeLiUDP.Status_Overload;
+    chkS3.Checked := m_KeLiUDP.Status_Steady;
+    chkS4.Checked := m_KeLiUDP.Status_CommOK;
+    chkChkOK.Checked := m_KeLiUDP.CheckSumOK;
+  end;
+
 end;
 
 procedure TfrmMain.KeLiUdpError;
